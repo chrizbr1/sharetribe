@@ -1,0 +1,35 @@
+[build]
+builder = "heroku/buildpacks:20"
+
+[variables]
+RAILS_ENV = "production"
+NODE_ENV = "production"
+
+[start]
+cmd = "bundle exec rails server -e production"
+
+[phases.setup]
+nixpkgs = ["ruby_3_2", "nodejs_18", "mysql80", "imagemagick", "sphinx"]
+
+[phases.install]
+cmds = [
+  "gem install bundler",
+  "bundle install",
+  "npm install",
+  "cd client && npm install"
+]
+
+[phases.build]
+cmds = [
+  "RAILS_ENV=production bundle exec rake db:create",
+  "RAILS_ENV=production bundle exec rake db:schema:load",
+  "RAILS_ENV=production bundle exec rake ts:index",
+  "RAILS_ENV=production bundle exec rake ts:start",
+  "RAILS_ENV=production NODE_ENV=production bundle exec rake assets:precompile"
+]
+
+[phases.start]
+cmds = [
+  "RAILS_ENV=production bundle exec rake jobs:work",
+  "bundle exec rails server -e production"
+]
